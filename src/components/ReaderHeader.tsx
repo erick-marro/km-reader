@@ -1,21 +1,21 @@
 
 interface ReaderHeaderProps {
   title: string;
+  brandLabel: string;
   currentPage: number;
   numPages: number;
   isTwoPageSpread: boolean;
   onOpenToc: () => void;
-  onCloseBook: () => void;
   hasToc: boolean;
 }
 
 export function ReaderHeader({
   title,
+  brandLabel,
   currentPage,
   numPages,
   isTwoPageSpread,
   onOpenToc,
-  onCloseBook,
   hasToc,
 }: ReaderHeaderProps) {
   const percentage = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0;
@@ -27,18 +27,13 @@ export function ReaderHeader({
   return (
     <header className="reader-header">
       <div className="header-left">
-        <button
-          type="button"
-          className="header-btn brand-btn"
-          onClick={onCloseBook}
-          title="Volver a inicio / Abrir otro PDF"
-        >
+        <div className="header-btn brand-btn" title={brandLabel}>
           <svg className="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
           </svg>
-          <span className="app-name">Empower Time</span>
-        </button>
+          <span className="app-name">{brandLabel}</span>
+        </div>
 
         {hasToc && (
           <button

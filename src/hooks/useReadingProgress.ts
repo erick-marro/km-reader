@@ -11,17 +11,21 @@ export interface BookProgress {
 
 const STORAGE_PREFIX = 'empower_time_progress_';
 
-export function getProgressKey(source: File | string): string {
+export function getProgressKey(source: File | string, bookSlug?: string): string {
   if (typeof source === 'string') {
-    return 'empower_time_assets_book';
+    return `assets_book_${bookSlug || 'default'}`;
   }
   return `${source.name}_${source.size}`;
 }
 
-export function useReadingProgress(source: File | string | null, totalPages: number = 0) {
+export function useReadingProgress(
+  source: File | string | null,
+  totalPages: number = 0,
+  bookSlug?: string
+) {
   const [savedPage, setSavedPage] = useState<number | null>(null);
 
-  const fileKey = source ? getProgressKey(source) : null;
+  const fileKey = source ? getProgressKey(source, bookSlug) : null;
 
   // Load progress when source changes
   useEffect(() => {
@@ -51,8 +55,9 @@ export function useReadingProgress(source: File | string | null, totalPages: num
       if (!source || !fileKey) return;
 
       const total = numPages || totalPages;
-      const fileName = typeof source === 'string' ? 'Empower Time: El empresario del Reino' : source.name;
-      const fileSize = typeof source === 'string' ? 591813 : source.size;
+      const fileName =
+        typeof source === 'string' ? customTitle || bookSlug || 'Libro' : source.name;
+      const fileSize = typeof source === 'string' ? 0 : source.size;
 
       const progressData: BookProgress = {
         fileName,
@@ -60,7 +65,7 @@ export function useReadingProgress(source: File | string | null, totalPages: num
         lastPage: page,
         totalPages: total,
         lastReadTimestamp: Date.now(),
-        title: customTitle || 'Empower Time',
+        title: customTitle || bookSlug || 'Libro',
       };
 
       try {
@@ -69,7 +74,7 @@ export function useReadingProgress(source: File | string | null, totalPages: num
         console.warn('Failed to save reading progress to localStorage', e);
       }
     },
-    [source, fileKey, totalPages]
+    [source, fileKey, totalPages, bookSlug]
   );
 
   return { savedPage, saveProgress };

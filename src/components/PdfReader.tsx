@@ -11,15 +11,22 @@ import { TableOfContents } from './TableOfContents';
 
 interface PdfReaderProps {
   source: File | string;
-  onClose?: () => void;
+  /** Slug del libro: aísla el progreso de lectura por libro */
+  bookSlug?: string;
+  /** Título completo del libro */
+  bookTitle?: string;
+  /** Etiqueta corta mostrada como marca en la cabecera */
+  brandLabel?: string;
 }
 
-export function PdfReader({ source, onClose }: PdfReaderProps) {
+export function PdfReader({ source, bookSlug, bookTitle, brandLabel }: PdfReaderProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { pdfDoc, numPages, outline, title, loading, error } = usePdfDocument(source);
+  const { pdfDoc, numPages, outline, title, loading, error } = usePdfDocument(source, bookTitle);
   const { isTwoPageSpread } = useResponsiveLayout();
-  const { savedPage, saveProgress } = useReadingProgress(source, numPages);
+  const { savedPage, saveProgress } = useReadingProgress(source, numPages, bookSlug);
   const { isProtectedView } = useContentProtection();
+
+  const displayTitle = title || bookTitle || 'este libro';
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
@@ -135,7 +142,7 @@ export function PdfReader({ source, onClose }: PdfReaderProps) {
             <div className="page page-left"></div>
             <div className="page page-right"></div>
           </div>
-          <h2>Abriendo Empower Time...</h2>
+          <h2>Abriendo {displayTitle}...</h2>
           <p>Preparando tu libro PDF con la mejor calidad visual</p>
         </div>
       </div>
@@ -149,7 +156,7 @@ export function PdfReader({ source, onClose }: PdfReaderProps) {
           <div className="error-icon">⚠️</div>
           <h2>Error al cargar el libro</h2>
           <p>{error || 'No se pudo procesar el documento PDF.'}</p>
-          <button type="button" className="browse-btn" onClick={onClose}>
+          <button type="button" className="browse-btn" onClick={() => window.location.reload()}>
             Volver a intentar
           </button>
         </div>
@@ -170,17 +177,17 @@ export function PdfReader({ source, onClose }: PdfReaderProps) {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
-            <span>Contenido Protegido — Empower Time</span>
+            <span>Contenido Protegido — {displayTitle}</span>
           </div>
         </div>
       )}
       <ReaderHeader
-        title={title}
+        title={displayTitle}
+        brandLabel={brandLabel || displayTitle}
         currentPage={currentPage}
         numPages={numPages}
         isTwoPageSpread={isTwoPageSpread}
         onOpenToc={() => setIsTocOpen(true)}
-        onCloseBook={onClose || (() => {})}
         hasToc={outline.length > 0}
       />
 

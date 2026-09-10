@@ -18,7 +18,10 @@ export interface PdfDocumentState {
   error: string | null;
 }
 
-export function usePdfDocument(source: File | string | null): PdfDocumentState {
+export function usePdfDocument(
+  source: File | string | null,
+  fallbackTitle?: string
+): PdfDocumentState {
   const [state, setState] = useState<PdfDocumentState>({
     pdfDoc: null,
     numPages: 0,
@@ -47,11 +50,10 @@ export function usePdfDocument(source: File | string | null): PdfDocumentState {
     const loadDocument = async () => {
       try {
         let loadingTask;
-        let docTitle = 'Empower Time';
+        let docTitle = fallbackTitle || 'Libro';
 
         if (typeof source === 'string') {
           loadingTask = pdfjsLib.getDocument({ url: source });
-          docTitle = 'Empower Time: El empresario del Reino';
         } else {
           const arrayBuffer = await source.arrayBuffer();
           loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
@@ -61,14 +63,18 @@ export function usePdfDocument(source: File | string | null): PdfDocumentState {
         const pdf = await loadingTask.promise;
 
         if (!isMounted) return;
-        try {
-          const metadata = await pdf.getMetadata();
-          if (metadata?.info && (metadata.info as { Title?: string }).Title) {
-            const metaTitle = (metadata.info as { Title?: string }).Title?.trim();
-            if (metaTitle) docTitle = metaTitle;
+        // Un título explícito del catálogo siempre tiene prioridad sobre los
+        // metadatos internos del PDF (que a veces traen nombres poco claros).
+        if (!fallbackTitle) {
+          try {
+            const metadata = await pdf.getMetadata();
+            if (metadata?.info && (metadata.info as { Title?: string }).Title) {
+              const metaTitle = (metadata.info as { Title?: string }).Title?.trim();
+              if (metaTitle) docTitle = metaTitle;
+            }
+          } catch (e) {
+            console.warn('Could not read PDF metadata', e);
           }
-        } catch (e) {
-          console.warn('Could not read PDF metadata', e);
         }
 
         // Get outline (Table of contents)
@@ -112,7 +118,7 @@ export function usePdfDocument(source: File | string | null): PdfDocumentState {
     return () => {
       isMounted = false;
     };
-  }, [source]);
+  }, [source, fallbackTitle]);
 
   return state;
 }
